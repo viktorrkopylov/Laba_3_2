@@ -1,38 +1,49 @@
 
-#include <iostream>
+#include <ctime>
 #include <cstdlib>
-#include <math.h>
+#include <iostream>
 
 class Matrix {
 private:
-    int** data;
+    int **data;
     unsigned int m;
     unsigned int n;
 
 public:
-
-    Matrix(unsigned int rows, unsigned int cols) : m(rows), n(cols) {
+    Matrix(unsigned int rows, unsigned int cols) 
+        : m(rows), n(cols) {
         data = new int* [m];
         for (unsigned int i = 0; i < m; ++i) {
             data[i] = new int[n];
         }
     }
 
-
-    ~Matrix() {
-        for (unsigned int i = 0; i < m; ++i) {
-            delete[] data[i];
+    Matrix(Matrix& temp, Matrix& other) {             // other = mat1 
+        temp = *this;
+        if (this->data != nullptr) {
+            delete[] this->data;
         }
-        delete[] data;
+        
+        this->data = new int* [other.m];
+        for (unsigned int i = 0; i < other.m; ++i) {            //создание матрицы для создаваемого объекта
+            this->data[i] = new int[other.n];
+        }
+
+        for (unsigned int i; i < other.m; ++i) {
+            for (unsigned int j; j < other.n; ++j) {
+                this->data[i][j] = other.data[i][j];
+            }
+        }
     }
 
-    // Перегрузка оператора [] для доступа и изменения элемента
-    int* operator[](unsigned int row) {
-        return data[row];
+
+    ~Matrix() {}
+
+    int* operator[](unsigned int index) {
+        return data[index];
     }
 
-    // Метод для заполнения случайными значениями от 0 до 9
-    void randomFill() {
+    void fillRandom() {
         for (unsigned int i = 0; i < m; ++i) {
             for (unsigned int j = 0; j < n; ++j) {
                 data[i][j] = rand() % 10;
@@ -40,41 +51,55 @@ public:
         }
     }
 
-    // Перегрузка оператора вывода в поток (<<)
-    friend std::ostream& operator<<(std::ostream& os, Matrix& matrix) {
+    friend std::ostream& operator<<(std::ostream& os, const Matrix& matrix) {
         for (unsigned int i = 0; i < matrix.m; ++i) {
             for (unsigned int j = 0; j < matrix.n; ++j) {
-                os << matrix.data[i][j] << " ";
+                os << matrix.data[i][j] << ' ';
             }
-            os << std::endl;
+            os << '\n';
         }
         return os;
     }
 
-    // Перегрузка оператора сложения (+)
-    friend Matrix  operator+ (const Matrix& a, const Matrix& b) {
-        Matrix result(a.m, a.n);
-        for (unsigned int i = 0; i < a.m; ++i) {
-            for (unsigned int j = 0; j < a.n; ++j) {
-                result.data[i][j] = a.data[i][j] + b.data[i][j];
+    Matrix& operator+=(const Matrix& other) {
+        for (unsigned int i = 0; i < m; ++i) {
+            for (unsigned int j = 0; j < n; ++j) {
+                data[i][j] += other.data[i][j];
+            }
+        }
+        return *this;
+    }
+
+    Matrix& operator+(const Matrix& other) const {
+        Matrix result(m, n);
+        for (unsigned int i = 0; i < m; ++i) {
+            for (unsigned int j = 0; j < n; ++j) {
+                result.data[i][j] = data[i][j] + other.data[i][j];
             }
         }
         return result;
     }
 
-    // Перегрузка оператора вычитания (-)
-    friend Matrix operator- (const Matrix& a, const Matrix& b) {
-        Matrix result(a.m, a.n);
-        for (unsigned int i = 0; i < a.m; ++i) {
-            for (unsigned int j = 0; j < a.n; ++j) {
-                result.data[i][j] = a.data[i][j] - b.data[i][j];
+    Matrix& operator-=(const Matrix& other) {
+        for (unsigned int i = 0; i < m; ++i) {
+            for (unsigned int j = 0; j < n; ++j) {
+                data[i][j] -= other.data[i][j];
+            }
+        }
+        return *this;
+    }
+
+    Matrix& operator-(const Matrix& other) const {
+        Matrix result(m, n);
+        for (unsigned int i = 0; i < m; ++i) {
+            for (unsigned int j = 0; j < n; ++j) {
+                result.data[i][j] = data[i][j] - other.data[i][j];
             }
         }
         return result;
     }
 
-    // Перегрузка оператора умножения (*)
-    friend Matrix operator* (const Matrix& a, const Matrix& b) {
+    friend Matrix operator* (const Matrix& a, const Matrix& b) {            // matrix a умножить 
         Matrix result(a.m, b.n);
         for (unsigned int i = 0; i < a.m; ++i) {
             for (unsigned int j = 0; j < b.n; ++j) {
@@ -87,32 +112,38 @@ public:
         return result;
     }
 
+    bool operator==(const Matrix& other) const {
+        return data == other.data;
+    }
+
+    bool operator!=(const Matrix& other) const {
+        return !(*this == other);                       // *this == other
+    }
 };
 
 int main() {
-    srand(static_cast<unsigned int>(time(0))); // Для генерации случайных чисел по времени 
+    setlocale(LC_ALL, "RUS");   
 
-    Matrix mat1(3, 3); 
-    mat1.randomFill(); 
-    std::cout << "First matrix:" << std::endl;
-    std::cout << mat1; 
+    Matrix mat1(3, 3);
+    Matrix mat2(3, 3);
 
-    Matrix mat2(3, 3); 
-    mat2.randomFill(); 
-    std::cout << "Second matrix:" << std::endl;
-    std::cout << mat2; 
+    mat1.fillRandom();
+    mat2.fillRandom();
 
-    Matrix sum = mat1 + mat2; 
-    std::cout << "Sum of matrices:" << std::endl;
-    std::cout << sum; 
+    std::cout << "Matrix 1:\n" << mat1 << std:: endl;
+    std::cout << "Matrix 2:\n" << mat2 << std::endl;
+
+    Matrix sum = mat1 + mat2;
+    std::cout << "Сумма матриц:\n" << sum << std::endl;
 
     Matrix diff = mat1 - mat2;
-    std::cout << "Matrix difference:" << std::endl;
-    std::cout << diff; 
+    std::cout << "Разность матриц:\n" << diff << std::endl;
 
-    Matrix mult = mat1 * mat2; 
-    std::cout << "Product of matrices:" << std::endl;
-    std::cout << mult; 
+    Matrix mult = mat1 * mat2;
+    std::cout << "Произведение матриц:\n" << mult << std::endl;
+
+    std::cout << "Matrix 1 == Matrix 2: " << (mat1 == mat2) << std::endl;
+    std::cout << "Matrix 1 != Matrix 2: " << (mat1 != mat2) << std::endl;
 
     return 0;
-}﻿
+}
